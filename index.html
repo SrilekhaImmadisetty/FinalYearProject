@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Risk Predictor</title>
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: Arial, sans-serif;
+      background-image: url('https://images.unsplash.com/photo-1519389950473-47ba0277781c');
+      background-size: cover;
+      background-position: center;
+      background-repeat: no-repeat;
+      background-attachment: fixed;
+      height: 100vh;
+      color: #fff;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+
+    .form-container {
+      background-color: rgba(0, 0, 0, 0.6);
+      padding: 30px;
+      border-radius: 15px;
+      width: 90%;
+      max-width: 500px;
+      box-shadow: 0 8px 16px rgba(0,0,0,0.3);
+    }
+
+    h2 {
+      text-align: center;
+      margin-bottom: 20px;
+    }
+
+    input, textarea, button {
+      width: 100%;
+      padding: 12px;
+      margin-bottom: 15px;
+      border: none;
+      border-radius: 8px;
+      font-size: 16px;
+      background-color: rgba(255, 255, 255, 0.1);
+      color: #fff;
+      backdrop-filter: blur(5px);
+    }
+
+    input::placeholder, textarea::placeholder {
+      color: rgba(255, 255, 255, 0.7);
+    }
+
+    textarea {
+      resize: vertical;
+    }
+
+    button {
+      background-color: #007BFF;
+      color: white;
+      font-weight: bold;
+      cursor: pointer;
+      transition: background-color 0.3s ease;
+    }
+
+    button:hover {
+      background-color: #0056b3;
+    }
+
+    #result {
+      margin-top: 15px;
+      font-size: 16px;
+      font-weight: bold;
+      background-color: rgba(0, 0, 0, 0.4);
+      padding: 10px;
+      border-radius: 8px;
+    }
+
+    img {
+      max-width: 100%;
+      margin-top: 20px;
+      border: 2px solid #fff;
+      border-radius: 10px;
+      display: none;
+    }
+  </style>
+</head>
+<body>
+  <div class="form-container">
+    <h2>🛠️ Project Risk Analyzer</h2>
+
+    <input id="projectName" placeholder="Project Name" />
+    <textarea id="taskNames" placeholder="Enter tasks separated by commas"></textarea>
+    <input id="depValue" type="number" step="0.01" placeholder="Dependency Value (e.g., 0.75)" />
+    <input id="indepValue" type="number" step="0.01" placeholder="Independent Value (e.g., 0.25)" />
+    <button onclick="submitData()">Analyze Risk</button>
+
+    <div id="result"></div>
+    <img id="dagImage" />
+  </div>
+
+  <script>
+    async function submitData() {
+      const resultDiv = document.getElementById('result');
+      const imageTag = document.getElementById('dagImage');
+
+      resultDiv.innerText = "⏳ Analyzing...";
+      imageTag.style.display = "none";
+
+      const data = {
+        project_name: document.getElementById('projectName').value,
+        task_names: document.getElementById('taskNames').value,
+        dep_value: document.getElementById('depValue').value,
+        indep_value: document.getElementById('indepValue').value
+      };
+
+      try {
+        const response = await fetch('/predict', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(data)
+        });
+
+        if (!response.ok) {
+          const errorData = await response.json();
+          resultDiv.innerText = '❌ Error: ' + errorData.error;
+          return;
+        }
+
+        const result = await response.json();
+        resultDiv.innerText = result.message;
+
+        if (result.dag_image) {
+          imageTag.src = '/get-dag-image?' + new Date().getTime(); // avoid cache
+          imageTag.style.display = "block";
+        }
+      } catch (err) {
+        resultDiv.innerText = '❌ Fetch failed: ' + err.message;
+      }
+    }
+  </script>
+</body>
+</html>
